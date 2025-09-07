@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, render_template
 from requests import get
 import ffmpeg
 
@@ -34,7 +34,6 @@ def clip_video(blob, time, length=6):
     start_time = time - first_time
     merged = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4").name
     try:
-        # Step 1: Concatenate into an intermediate mp4
         (
             ffmpeg
             .input(list_filename,
@@ -54,12 +53,18 @@ def clip_video(blob, time, length=6):
             os.remove(merged)
 
 
-@app.route('/<blob>')
-def hello_world(blob):  # put application's code here
-    length = int(request.args.get('length', 6))
-    time_code = int(request.args['time'])
-    clip_video(f"{blob}", time_code, length)
+@app.post('/clip')
+def hello_world():  # put application's code here
+    print(request.form)
+    length = int(request.form.get('length', 6))
+    time_code = int(request.form['timecode'])
+    link = request.form['link'].split("/game/")[1]
+    clip_video(link, time_code, length)
     return send_file("output.mp4")
+
+@app.get('/')
+def home():
+    return render_template("/home.html")
 
 
 if __name__ == '__main__':
